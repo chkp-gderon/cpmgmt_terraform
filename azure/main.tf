@@ -2,15 +2,14 @@
 
 resource "azurerm_resource_group" "rg_mgmt" {
     name = var.rg_name
-    location = var.az_location
+    location = var.location
 }
 
 resource "azurerm_virtual_network" "vnet_mgmt" {
   name          = var.vnet_name
   address_space = var.vnet_cidr
-  location      = var.az_location
+  location      = var.location
   resource_group_name = azurerm_resource_group.rg_mgmt.name
-
 }
 
 resource "azurerm_subnet" "subnet_mgmt" {
@@ -18,20 +17,19 @@ resource "azurerm_subnet" "subnet_mgmt" {
   resource_group_name  = azurerm_resource_group.rg_mgmt.name
   virtual_network_name = azurerm_virtual_network.vnet_mgmt.name
   address_prefixes     = var.subnet_mgmt_cidr
-
 }
 
 resource "azurerm_public_ip" "public_ip_mgmt" {
   name = "mgmtPublicIP"
   resource_group_name = azurerm_resource_group.rg_mgmt.name
-  location = var.az_location
+  location = var.location
   allocation_method = "Static"
   sku = "Standard"
 }
 
 resource "azurerm_network_interface" "mgmt_nic" {
   name = "mgmt-eth0"
-  location = var.az_location
+  location = var.location
   resource_group_name = var.rg_name
 
   ip_configuration {
@@ -47,13 +45,25 @@ resource "azurerm_network_interface" "mgmt_nic" {
 resource "azurerm_linux_virtual_machine" "vm_logserver" {
   name = var.log_server_name
   resource_group_name = var.rg_name
-  location = var.az_location
+  location = var.location
   size = "Standard_D3_v2"
   admin_username = var.admin_username
   admin_password = var.admin_password
   disable_password_authentication = false
   network_interface_ids = [ azurerm_network_interface.mgmt_nic.id ]
-  custom_data = "${base64encode("#!/usr/bin/python3 /etc/cloud_config.py\n\ninstallationType=\"management\"\nallowUploadDownload=\"true\"\nosVersion=\"r8040\"\ntemplateName=\"management\"\nisBlink=\"false\"\ntemplateVersion=\"20201109\"\nbootstrapScript64=\"\"\nlocation=\"West Europe\"\nmanagementGUIClientNetwork=\"0.0.0.0/0\"\n")}"
+  custom_data = base64encode(templatefile("${path.module}/cloud-init.sh",{
+    installation_type=var.installation_type
+    allow_upload_download= var.allow_upload_download
+    os_version=var.os_version
+    template_name=var.template_name
+    template_version=var.template_version
+    is_blink=var.is_blink
+    bootstrap_script64=base64encode(var.bootstrap_script)
+    location=var.location
+    management_gui_client_network=var.management_gui_client_network
+  })
+  )
+
   source_image_reference {
     publisher = "checkpoint"
     offer = "check-point-cg-r8040"
@@ -75,7 +85,7 @@ resource "azurerm_linux_virtual_machine" "vm_logserver" {
 
 resource "azurerm_network_security_group" "nsg_mgmt" {
   name = "mgmt_nsg"
-  location = var.az_location
+  location = var.location
   resource_group_name = azurerm_resource_group.rg_mgmt.name
 
 }
