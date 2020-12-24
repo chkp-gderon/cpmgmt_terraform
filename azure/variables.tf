@@ -1,52 +1,47 @@
- variable "subscription_id" {
-   type = string
- }
+//********************** Basic Configuration Variables **************************//
+
  variable "az_location" {
-   type = string
+  description = "The location/region where rescources will be created. The full list of Azure regions can be found at https://azure.microsoft.com/regions"
+  type = string
  }
-
-variable "vnet_name" {
-    type = string
-}
-
-variable "vnet_cidr" {
-    type = list(string)
-}
 
 variable "rg_name" {
     type = string  
 }
 
+//********************** Networking Variables **************************//
+variable "vnet_name" {
+  type = string
+}
+
+variable "vnet_cidr" {
+  type = list(string)
+}
+
 variable "subnet_mgmt_name" {
-    type = string
-  
+  type = string
 }
 
 variable "subnet_mgmt_cidr" {
-    type = list(string)
-  
+  type = list(string)
 }
 
-variable "cp_osversion" {
-    type = string
-    default = "R8040"
+variable "os_version" {
+  description = "GAIA OS version"
+  type = string
 }
 
 variable "log_server_name" {
   type = string
 }
 
-variable "admin_password_hash" {
-  type = string
+variable "admin_username" {
+  description = "Administrator username of deployed VM. Due to Azure limitations 'notused' name can be used"
+  default     = "notused"
 }
 
 variable "admin_password" {
   type = string
-}
-
-variable "admin_username" {
-    type = string
-  
 }
 
 #variable "custom_data" {
@@ -61,7 +56,13 @@ variable "admin_username" {
 #            "version": "latest"
 #        },
 
-
 variable "cloud_config_string" {
-    type = string
+  type = string
 }
+
+//********************** Credentials **************************//
+
+ variable "subscription_id" {
+  description = "Subscription ID"
+  type = string
+ }
